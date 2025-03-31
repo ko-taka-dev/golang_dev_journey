@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"calculator/internal/calculator"
+	"github.com/ko-taka-dev/golang_dev_journey/calculator/internal/calculator"
 )
 
 func main() {

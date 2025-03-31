@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"calculator/internal/calculator"
+	"github.com/ko-taka-dev/golang_dev_journey/calculator/internal/calculator"
 )
 
 func main() {

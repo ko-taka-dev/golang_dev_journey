@@ -1,4 +1,4 @@
-module "calculator"
+module "github.com/ko-taka-dev/golang_dev_journey/calculator"
 
 go 1.21.5
 
