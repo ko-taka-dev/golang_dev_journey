@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"fmt"
+
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/domain"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/repository"
@@ -40,33 +42,44 @@ func (uc *TodoUseCase) CreateTodo(title string) (domain.Todo, error) {
 
 // GetTodos はすべてのTODOを取得するメソッド
 func (uc *TodoUseCase) GetTodos() ([]domain.Todo, error) {
-    todos := uc.repo.FindAll()
+	todos, err := uc.repo.FindAll()
+	if err != nil {
+		return nil, errors.NewInternalError("Todoの取得に失敗しました", err)
+	}
     return todos, nil
 }
 
 // CompleteTodoByID は指定されたIDのTODOを完了状態にするメソッド
 func (uc *TodoUseCase) CompleteTodoByID(id string) (domain.Todo, error) {
-    todo := uc.repo.FindByID(id)
-    if todo == nil {
-        return domain.Todo{}, errors.NewNotFoundError("指定されたIDのTODOが見つかりません")
-    }
-    
+	todo, err := uc.repo.FindByID(id)
+	if err != nil {
+		return domain.Todo{}, errors.NewInternalError(fmt.Sprintf("ID %s のTodoの検索に失敗しました", id), err)
+	}
+	
+	if todo == nil {
+		return domain.Todo{}, errors.NewNotFoundError(fmt.Sprintf("ID %s のTodoが見つかりません", id))
+	}
+
     todo.Done = true
     if err := uc.repo.Update(todo); err != nil {
-        return domain.Todo{}, errors.NewInternalError("Todoの更新に失敗しました", err)
+		return domain.Todo{}, errors.NewInternalError(fmt.Sprintf("ID %s のTodoの更新に失敗しました", id), err)
     }
     return *todo, nil
 }
 
 // DeleteTodoByID は指定されたIDのTODOを削除するメソッド
 func (uc *TodoUseCase) DeleteTodoByID(id string) error {
-    todo := uc.repo.FindByID(id)
-    if todo == nil {
-        return errors.NewNotFoundError("指定されたIDのTODOが見つかりません")
-    }
-    
-    if err := uc.repo.Delete(todo); err != nil {
-        return errors.NewInternalError("Todoの削除に失敗しました", err)
-    }
+	todo, err := uc.repo.FindByID(id)
+	if err != nil {
+		return errors.NewInternalError(fmt.Sprintf("ID %s のTodoの検索に失敗しました", id), err)
+	}
+	
+	if todo == nil {
+		return errors.NewNotFoundError(fmt.Sprintf("ID %s のTodoが見つかりません", id))
+	}
+	
+	if err := uc.repo.Delete(todo); err != nil {
+		return errors.NewInternalError(fmt.Sprintf("ID %s のTodoの削除に失敗しました", id), err)
+	}
     return nil
 }

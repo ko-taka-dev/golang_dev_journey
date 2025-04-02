@@ -22,20 +22,23 @@ func (r *TodoRepository) Create(todo *domain.Todo) error {
 }
 
 // FindAll はすべてのTodoを取得するメソッド
-func (r *TodoRepository) FindAll() []domain.Todo {
-    var todos []domain.Todo
-    r.db.Find(&todos)
-    return todos
+func (r *TodoRepository) FindAll() ([]domain.Todo, error) {
+	var todos []domain.Todo
+	result := r.db.Find(&todos)
+	return todos, result.Error
 }
 
 // FindByID は指定されたIDのTodoを取得するメソッド
-func (r *TodoRepository) FindByID(id string) *domain.Todo {
-    var todo domain.Todo
-    result := r.db.First(&todo, id)
-    if result.Error != nil || todo.ID == 0 {
-        return nil
-    }
-    return &todo
+func (r *TodoRepository) FindByID(id string) (*domain.Todo, error) {
+	var todo domain.Todo
+	result := r.db.First(&todo, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil // レコードが見つからない場合は特別扱い
+		}
+		return nil, result.Error
+	}
+	return &todo, nil
 }
 
 // Update は指定されたTodoを更新するメソッド

@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// StartGUI GUIを起動
 func StartGUI(apiBaseURL string) {
 	a := app.New()
 	w := a.NewWindow("TODO アプリ")

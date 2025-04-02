@@ -13,6 +13,7 @@ type TodoClient struct {
 	baseURL string
 }
 
+// NewTodoClient はTodoClientを作成
 func NewTodoClient(baseURL string) *TodoClient {
 	return &TodoClient{
 		baseURL: baseURL,

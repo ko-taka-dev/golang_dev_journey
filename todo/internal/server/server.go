@@ -71,7 +71,12 @@ func (s *TodoServer) createTodo(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "リクエストボディの解析に失敗しました", http.StatusBadRequest)
         return
     }
-    
+
+    if req.Title == "" {
+        http.Error(w, "タイトルは必須です", http.StatusBadRequest)
+        return
+    }
+
     todo, err := s.useCase.CreateTodo(req.Title)
     if err != nil {
         if errors.IsInvalidInput(err) {
@@ -141,10 +146,4 @@ func (s *TodoServer) completeTodo(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Todoのエンコード中にエラーが発生しました", http.StatusInternalServerError)
         return
     }
-}
-
-func StartServer(addr string, useCase *usecase.TodoUseCase) error {
-	server := NewTodoServer(useCase)
-	log.Printf("Starting server on %s", addr)
-	return http.ListenAndServe(addr, server)
 }
