@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/domain"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
@@ -32,7 +33,20 @@ func (uc *TodoUseCase) CreateTodo(title string) (domain.Todo, error) {
     if title == "" {
         return domain.Todo{}, errors.NewInvalidInputError("タイトルは必須です")
     }
+
+    // タイトルの長さ制限
+    if len(title) > 100 {
+        return domain.Todo{}, errors.NewInvalidInputError("タイトルは100文字以内にしてください")
+    }
     
+    // タイトルのトリミング（前後の空白を削除）
+    title = strings.TrimSpace(title)
+    
+    // トリミング後に空になった場合もエラー
+    if title == "" {
+        return domain.Todo{}, errors.NewInvalidInputError("タイトルに有効な文字を入力してください")
+    }
+
     todo := domain.Todo{Title: title, Done: false}
     if err := uc.repo.Create(&todo); err != nil {
         return domain.Todo{}, errors.NewInternalError("Todoの作成に失敗しました", err)
