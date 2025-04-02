@@ -7,6 +7,15 @@ import (
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/repository"
 )
 
+// TodoUseCaseInterface はTodoのユースケースを定義するインターフェース
+type TodoUseCaseInterface interface {
+    GetTodos() []domain.Todo
+    CreateTodo(title string) domain.Todo
+    CompleteTodoByID(id string) (domain.Todo, error)
+    DeleteTodoByID(id string) error
+}
+
+// TodoUseCase は TodoUseCaseInterface を実装する構造体
 type TodoUseCase struct {
     repo *repository.TodoRepository
 }
@@ -25,14 +34,14 @@ func (uc *TodoUseCase) GetTodos() []domain.Todo {
     return uc.repo.FindAll()
 }
 
-func (uc *TodoUseCase) CompleteTodoByID(id string) (*domain.Todo, error) {
+func (uc *TodoUseCase) CompleteTodoByID(id string) (domain.Todo, error) {
     todo := uc.repo.FindByID(id)
     if todo == nil {
-        return nil, errors.New("TODOが見つかりません")
+        return domain.Todo{}, errors.New("TODOが見つかりません")
     }
     todo.Done = true
     uc.repo.Update(todo)
-    return todo, nil
+    return *todo, nil
 }
 
 func (uc *TodoUseCase) DeleteTodoByID(id string) error {

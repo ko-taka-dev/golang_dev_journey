@@ -9,12 +9,14 @@ import (
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/usecase"
 )
 
+// TodoServer 構造体を修正
 type TodoServer struct {
 	router  *mux.Router
-	useCase *usecase.TodoUseCase
+	useCase usecase.TodoUseCaseInterface // インターフェースを使用
 }
 
-func NewTodoServer(useCase *usecase.TodoUseCase) *TodoServer {
+// NewTodoServer 関数を修正
+func NewTodoServer(useCase usecase.TodoUseCaseInterface) *TodoServer {
 	s := &TodoServer{
 		router:  mux.NewRouter(),
 		useCase: useCase,
