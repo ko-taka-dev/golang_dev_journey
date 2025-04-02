@@ -5,37 +5,47 @@ import (
 	"gorm.io/gorm"
 )
 
+// TodoRepository はTodoエンティティのデータアクセスを担当する構造体
 type TodoRepository struct {
     db *gorm.DB
 }
 
+// NewTodoRepository はTodoRepositoryのコンストラクタ
 func NewTodoRepository(db *gorm.DB) *TodoRepository {
     return &TodoRepository{db: db}
 }
 
-func (r *TodoRepository) Create(todo *domain.Todo) {
-    r.db.Create(todo)
+// Create は新しいTodoを作成するメソッド
+func (r *TodoRepository) Create(todo *domain.Todo) error {
+    result := r.db.Create(todo)
+    return result.Error
 }
 
+// FindAll はすべてのTodoを取得するメソッド
 func (r *TodoRepository) FindAll() []domain.Todo {
     var todos []domain.Todo
     r.db.Find(&todos)
     return todos
 }
 
+// FindByID は指定されたIDのTodoを取得するメソッド
 func (r *TodoRepository) FindByID(id string) *domain.Todo {
     var todo domain.Todo
-    r.db.First(&todo, id)
-    if todo.ID == 0 {
+    result := r.db.First(&todo, id)
+    if result.Error != nil || todo.ID == 0 {
         return nil
     }
     return &todo
 }
 
-func (r *TodoRepository) Update(todo *domain.Todo) {
-    r.db.Save(todo)
+// Update は指定されたTodoを更新するメソッド
+func (r *TodoRepository) Update(todo *domain.Todo) error {
+    result := r.db.Save(todo)
+    return result.Error
 }
 
-func (r *TodoRepository) Delete(todo *domain.Todo) {
-    r.db.Delete(todo)
+// Delete は指定されたTodoを削除するメソッド
+func (r *TodoRepository) Delete(todo *domain.Todo) error {
+    result := r.db.Delete(todo)
+    return result.Error
 }

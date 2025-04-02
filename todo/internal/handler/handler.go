@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -25,12 +26,24 @@ func (h *TodoHandler) CreateTodoHandler(c *gin.Context) {
         return
     }
 
-    todo := h.usecase.CreateTodo(req.Title)
+    todo, err := h.usecase.CreateTodo(req.Title)
+    if err != nil {
+        if errors.IsInvalidInput(err) {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Todoの作成中にエラーが発生しました"})
+        return
+    }
     c.JSON(http.StatusCreated, todo)
 }
 
 func (h *TodoHandler) GetTodosHandler(c *gin.Context) {
-    todos := h.usecase.GetTodos()
+    todos, err := h.usecase.GetTodos()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Todoの取得中にエラーが発生しました"})
+        return
+    }
     c.JSON(http.StatusOK, todos)
 }
 
