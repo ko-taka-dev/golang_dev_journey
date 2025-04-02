@@ -25,7 +25,7 @@
    ```
 3. アプリを起動します。
    ```sh
-   go run main.go
+   go run cmd/main.go
    ```
 
 ## API エンドポイント
