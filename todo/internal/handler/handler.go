@@ -3,8 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/usecase"
+	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/errors"
+	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,14 +23,21 @@ func NewTodoHandler(usecase *usecase.TodoUseCase) *TodoHandler {
 // CreateTodoHandler は新しいTODOを作成するハンドラ
 func (h *TodoHandler) CreateTodoHandler(c *gin.Context) {
     var req struct {
-        Title string `json:"title"`
-    }
+		Title       string `json:"title" binding:"required,max=100"`
+	}
+
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
 
-    todo, err := h.usecase.CreateTodo(req.Title)
+	if valid, errMsg := utils.ValidateTitle(req.Title); !valid {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+		return
+	}
+
+	sanitizedTitle := utils.SanitizeInput(req.Title)
+    todo, err := h.usecase.CreateTodo(sanitizedTitle)
     if err != nil {
         if errors.IsInvalidInput(err) {
             c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

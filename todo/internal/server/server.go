@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
-	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/logger"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/usecase"
+	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/errors"
+	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/logger"
 )
 
 // TodoServer はHTTPリクエストを処理するサーバー
@@ -91,6 +91,7 @@ func (s *TodoServer) createTodo(w http.ResponseWriter, r *http.Request) {
     todo, err := s.useCase.CreateTodo(req.Title)
     if err != nil {
         if errors.IsInvalidInput(err) {
+            s.logger.Errorf("無効な入力です: %v", err)
             http.Error(w, err.Error(), http.StatusBadRequest)
             return
         }
@@ -112,6 +113,7 @@ func (s *TodoServer) createTodo(w http.ResponseWriter, r *http.Request) {
 
 // deleteTodo は指定されたTODOを削除する
 func (s *TodoServer) deleteTodo(w http.ResponseWriter, r *http.Request) {
+    s.logger.Info("DELETE /todos/{id} リクエストを受信しました")
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -124,6 +126,7 @@ func (s *TodoServer) deleteTodo(w http.ResponseWriter, r *http.Request) {
     err := s.useCase.DeleteTodoByID(id)
     if err != nil {
         if errors.IsNotFound(err) {
+            s.logger.Errorf("指定されたTodoが見つかりません: %v", err)
             http.Error(w, err.Error(), http.StatusNotFound)
             return
         }
@@ -133,10 +136,12 @@ func (s *TodoServer) deleteTodo(w http.ResponseWriter, r *http.Request) {
     }
     
     w.WriteHeader(http.StatusNoContent)
+    s.logger.Infof("Todoを削除しました: id=%s", id)
 }
 
 // completeTodo は指定されたTODOを完了状態にする
 func (s *TodoServer) completeTodo(w http.ResponseWriter, r *http.Request) {
+    s.logger.Info("PUT /todos/{id}/done リクエストを受信しました")
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -149,6 +154,7 @@ func (s *TodoServer) completeTodo(w http.ResponseWriter, r *http.Request) {
     todo, err := s.useCase.CompleteTodoByID(id)
     if err != nil {
         if errors.IsNotFound(err) {
+            s.logger.Errorf("指定されたTodoが見つかりません: %v", err)
             http.Error(w, err.Error(), http.StatusNotFound)
             return
         }
@@ -165,4 +171,5 @@ func (s *TodoServer) completeTodo(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Todoのエンコード中にエラーが発生しました", http.StatusInternalServerError)
         return
     }
+    s.logger.Infof("Todoを完了状態にしました: id=%s, title=%s", id, todo.Title)
 }

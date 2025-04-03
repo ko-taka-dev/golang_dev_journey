@@ -8,7 +8,6 @@ import (
     "gorm.io/gorm"
 )
 
-
 // InitDB はデータベースを初期化し、マイグレーションを実行する関数
 func InitDB() *gorm.DB {
     db, err := gorm.Open(sqlite.Open("todo.db"), &gorm.Config{})

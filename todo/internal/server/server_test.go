@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/domain"
-	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/usecase"
+	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

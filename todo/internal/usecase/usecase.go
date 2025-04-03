@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/domain"
-	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/errors"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/repository"
+	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/errors"
 )
 
 // TodoUseCaseInterface はTodoのビジネスロジックを定義するインターフェース
@@ -41,7 +41,6 @@ func (uc *TodoUseCase) CreateTodo(title string) (domain.Todo, error) {
     
     // タイトルのトリミング（前後の空白を削除）
     title = strings.TrimSpace(title)
-    
     // トリミング後に空になった場合もエラー
     if title == "" {
         return domain.Todo{}, errors.NewInvalidInputError("タイトルに有効な文字を入力してください")
