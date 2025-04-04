@@ -19,12 +19,21 @@ type TodoUseCaseInterface interface {
 
 // TodoUseCase は TodoUseCaseInterface を実装する構造体
 type TodoUseCase struct {
-    repo *repository.TodoRepository
+    repo repository.TodoRepositoryInterface // インターフェースを使う
 }
 
 // NewTodoUseCase は新しいTodoUseCaseインスタンスを作成する関数
-func NewTodoUseCase(repo *repository.TodoRepository) *TodoUseCase {
+func NewTodoUseCase(repo repository.TodoRepositoryInterface) TodoUseCaseInterface {
     return &TodoUseCase{repo: repo}
+}
+
+// GetTodos はすべてのTODOを取得するメソッド
+func (uc *TodoUseCase) GetTodos() ([]domain.Todo, error) {
+	todos, err := uc.repo.FindAll()
+	if err != nil {
+		return nil, errors.NewInternalError("Todoの取得に失敗しました", err)
+	}
+    return todos, nil
 }
 
 // CreateTodo は新しいTODOを作成するメソッド
@@ -51,15 +60,6 @@ func (uc *TodoUseCase) CreateTodo(title string) (domain.Todo, error) {
         return domain.Todo{}, errors.NewInternalError("Todoの作成に失敗しました", err)
     }
     return todo, nil
-}
-
-// GetTodos はすべてのTODOを取得するメソッド
-func (uc *TodoUseCase) GetTodos() ([]domain.Todo, error) {
-	todos, err := uc.repo.FindAll()
-	if err != nil {
-		return nil, errors.NewInternalError("Todoの取得に失敗しました", err)
-	}
-    return todos, nil
 }
 
 // CompleteTodoByID は指定されたIDのTODOを完了状態にするメソッド
