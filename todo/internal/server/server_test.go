@@ -140,11 +140,12 @@ func TestCreateTodo(t *testing.T) {
             // モックの設定
             mockUseCase := new(MockTodoUseCase)
             
-            // 無効なJSONの場合はCreateTodoが呼ばれないことを期待
-            if tc.requestBody != "invalid json" {
+            // CreateTodoが呼ばれる条件だけ期待設定
+            if tc.requestBody != "invalid json" &&
+            tc.requestBody != `{"title": ""}` {
                 mockUseCase.On("CreateTodo", mock.AnythingOfType("string")).Return(tc.todo, tc.err)
             }
-            
+
             server := NewTodoServer(mockUseCase)
 
             // リクエスト実行

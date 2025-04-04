@@ -10,15 +10,18 @@ type TodoRepository struct {
     db *gorm.DB
 }
 
-// NewTodoRepository はTodoRepositoryのコンストラクタ
-func NewTodoRepository(db *gorm.DB) *TodoRepository {
-    return &TodoRepository{db: db}
+// TodoRepositoryInterface はTodoRepositoryのインターフェース
+type TodoRepositoryInterface interface {
+	FindAll() ([]domain.Todo, error)
+	FindByID(id string) (*domain.Todo, error)
+	Create(todo *domain.Todo) error
+	Update(todo *domain.Todo) error
+	Delete(todo *domain.Todo) error
 }
 
-// Create は新しいTodoを作成するメソッド
-func (r *TodoRepository) Create(todo *domain.Todo) error {
-    result := r.db.Create(todo)
-    return result.Error
+// NewTodoRepository はTodoRepositoryのコンストラクタ
+func NewTodoRepository(db *gorm.DB) TodoRepositoryInterface {
+    return &TodoRepository{db: db}
 }
 
 // FindAll はすべてのTodoを取得するメソッド
@@ -39,6 +42,12 @@ func (r *TodoRepository) FindByID(id string) (*domain.Todo, error) {
 		return nil, result.Error
 	}
 	return &todo, nil
+}
+
+// Create は新しいTodoを作成するメソッド
+func (r *TodoRepository) Create(todo *domain.Todo) error {
+    result := r.db.Create(todo)
+    return result.Error
 }
 
 // Update は指定されたTodoを更新するメソッド
