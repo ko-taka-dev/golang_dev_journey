@@ -193,11 +193,12 @@ func TestCreateTodo(t *testing.T) {
 	}
 }
 
-func TestCompleteTodoByID(t *testing.T) {
+func TestUpdateTodoByID(t *testing.T) {
 	// 様々なテストケースを実行
 	testCases := []struct {
 		name     string
 		id       string
+		done bool
 		mockBehavior  func(*MockTodoRepository)
 		expectedTodo  *domain.Todo
 		expectedError error
@@ -205,6 +206,7 @@ func TestCompleteTodoByID(t *testing.T) {
 		{
 			name:     "正常系: 存在するIDでTodoを完了",
 			id:       "1",
+			done: true,
 			mockBehavior: func(repo *MockTodoRepository) {
 				repo.On("FindByID", "1").Return(&domain.Todo{ID: 1, Title: "Todo 1", Done: false}, nil)
 				repo.On("Update", mock.MatchedBy(func(todo *domain.Todo) bool {
@@ -217,6 +219,7 @@ func TestCompleteTodoByID(t *testing.T) {
 		{
 			name:     "異常系: 存在しないIDでTodoを完了",
 			id:       "999",
+			done: false,
 			mockBehavior: func(repo *MockTodoRepository) {
 				repo.On("FindByID", "999").Return(nil, errors.New("not found"))
 			},
@@ -226,10 +229,11 @@ func TestCompleteTodoByID(t *testing.T) {
 		{
 			name:     "異常系: リポジトリエラー",
 			id:       "1",
+			done: false,
 			mockBehavior: func(repo *MockTodoRepository) {
 				repo.On("FindByID", "1").Return(&domain.Todo{ID: 1, Title: "Todo 1", Done: false}, nil)
 				repo.On("Update", mock.MatchedBy(func(todo *domain.Todo) bool {
-					return todo.ID == 1 && todo.Done == true
+					return todo.ID == 1 && todo.Done == false
 				})).Return(errors.New("database error"))
 			},
 			expectedTodo:  nil,
@@ -244,7 +248,7 @@ func TestCompleteTodoByID(t *testing.T) {
 
 			uc := NewTodoUseCase(mockRepo)
 
-			todo, err := uc.CompleteTodoByID(tc.id)
+			todo, err := uc.UpdateTodo(tc.id, tc.done)
 
 			if tc.expectedError != nil {
 				assert.Error(t, err)

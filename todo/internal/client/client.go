@@ -56,6 +56,29 @@ func (c *TodoClient) CreateTodo(title string) (*domain.Todo, error) {
 	return &createdTodo, nil
 }
 
+// PutTodoCompletionStatus 指定IDのTODOのステータスをAPIを通じて更新
+func (c *TodoClient) PutTodoCompletionStatus(todoID string, done bool) (*domain.Todo, error) {
+	url := fmt.Sprintf("%s/todos/%s", c.baseURL, todoID)
+
+	body := map[string]bool{"done": done}
+	jsonBody, _ := json.Marshal(body)
+
+	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to put status: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var updatedTodo domain.Todo
+	if err := json.NewDecoder(resp.Body).Decode(&updatedTodo); err != nil {
+		return nil, fmt.Errorf("failed to decode updated todo: %w", err)
+	}
+	return &updatedTodo, nil
+}
+
 // DeleteTodoByID 指定IDのTODOをAPIを通じて削除
 func (c *TodoClient) DeleteTodoByID(id string) error {
 	req, err := http.NewRequest(http.MethodDelete, c.baseURL+"/todos/"+id, nil)
@@ -74,24 +97,4 @@ func (c *TodoClient) DeleteTodoByID(id string) error {
         return fmt.Errorf("failed to delete todo: status code %d", resp.StatusCode)
     }
 	return nil
-}
-
-// CompleteTodoByID 指定IDのTODOをAPIを通じて完了状態に更新
-func (c *TodoClient) CompleteTodoByID(id string) (*domain.Todo, error) {
-	req, err := http.NewRequest(http.MethodPut, c.baseURL+"/todos/"+id+"/done", nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create complete todo request: %w", err)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to complete todo: %w", err)
-	}
-	defer resp.Body.Close()
-
-	var updatedTodo domain.Todo
-	if err := json.NewDecoder(resp.Body).Decode(&updatedTodo); err != nil {
-		return nil, fmt.Errorf("failed to decode updated todo: %w", err)
-	}
-	return &updatedTodo, nil
 }

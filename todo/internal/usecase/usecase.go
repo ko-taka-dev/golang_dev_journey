@@ -13,7 +13,7 @@ import (
 type TodoUseCaseInterface interface {
     GetTodos() ([]domain.Todo, error)
     CreateTodo(title string) (domain.Todo, error)
-    CompleteTodoByID(id string) (domain.Todo, error)
+    UpdateTodo(id string, done bool) (domain.Todo, error)
     DeleteTodoByID(id string) error
 }
 
@@ -62,8 +62,8 @@ func (uc *TodoUseCase) CreateTodo(title string) (domain.Todo, error) {
     return todo, nil
 }
 
-// CompleteTodoByID は指定されたIDのTODOを完了状態にするメソッド
-func (uc *TodoUseCase) CompleteTodoByID(id string) (domain.Todo, error) {
+// UpdateTodo は指定されたIDのTODOを更新するメソッド
+func (uc *TodoUseCase) UpdateTodo(id string, done bool) (domain.Todo, error) {
 	todo, err := uc.repo.FindByID(id)
 	if err != nil {
 		return domain.Todo{}, errors.NewInternalError(fmt.Sprintf("ID %s のTodoの検索に失敗しました", id), err)
@@ -73,7 +73,7 @@ func (uc *TodoUseCase) CompleteTodoByID(id string) (domain.Todo, error) {
 		return domain.Todo{}, errors.NewNotFoundError(fmt.Sprintf("ID %s のTodoが見つかりません", id))
 	}
 
-    todo.Done = true
+    todo.Done = done
     if err := uc.repo.Update(todo); err != nil {
 		return domain.Todo{}, errors.NewInternalError(fmt.Sprintf("ID %s のTodoの更新に失敗しました", id), err)
     }

@@ -41,9 +41,9 @@ func (m *MockTodoUseCase) DeleteTodoByID(id string) error {
 	return args.Error(0)
 }
 
-// CompleteTodoByID はIDを指定してTodoを完了状態にするメソッドのモックです
-func (m *MockTodoUseCase) CompleteTodoByID(id string) (domain.Todo, error) {
-	args := m.Called(id)
+// updateTodoByID はIDを指定してTodoを完了状態にするメソッドのモックです
+func (m *MockTodoUseCase) UpdateTodo(id string, done bool) (domain.Todo, error) {
+ 	args := m.Called(id, done)
 	return args.Get(0).(domain.Todo), args.Error(1)
 }
 
@@ -217,11 +217,12 @@ func TestDeleteTodo(t *testing.T) {
     }
 }
 
-func TestCompleteTodo(t *testing.T) {
+func TestUpdateTodo(t *testing.T) {
     // テストケース
     testCases := []struct {
         name        string
         id          string
+        body        string
         todo        domain.Todo
         err         error
         expectedStatus int
@@ -229,6 +230,7 @@ func TestCompleteTodo(t *testing.T) {
         {
             name: "正常系",
             id: "1",
+            body: `{"done": true}`,
             todo: domain.Todo{ID: 1, Title: "Test Todo", Done: true},
             err: nil,
             expectedStatus: http.StatusOK,
@@ -236,6 +238,7 @@ func TestCompleteTodo(t *testing.T) {
         {
             name: "存在しないID",
             id: "999",
+            body: `{"done": false}`,
             todo: domain.Todo{},
             err: errors.NewNotFoundError("指定されたIDのTODOが見つかりません"),
             expectedStatus: http.StatusNotFound,
@@ -243,6 +246,7 @@ func TestCompleteTodo(t *testing.T) {
         {
             name: "内部エラー",
             id: "1",
+            body: `{"done": false}`,
             todo: domain.Todo{},
             err: errors.NewInternalError("データベースエラー"),
             expectedStatus: http.StatusInternalServerError,
@@ -253,14 +257,15 @@ func TestCompleteTodo(t *testing.T) {
         t.Run(tc.name, func(t *testing.T) {
             // モックの設定
             mockUseCase := new(MockTodoUseCase)
-            mockUseCase.On("CompleteTodoByID", tc.id).Return(tc.todo, tc.err)
+            
+            mockUseCase.On("UpdateTodo", tc.id, tc.todo.Done).Return(tc.todo, tc.err)
             server := NewTodoServer(mockUseCase)
 
             // リクエスト実行
-            req := httptest.NewRequest(http.MethodPut, "/todos/"+tc.id+"/done", nil)
+            req := httptest.NewRequest(http.MethodPut, "/todos/"+tc.id, bytes.NewBuffer([]byte(tc.body)))
             req = mux.SetURLVars(req, map[string]string{"id": tc.id})
             w := httptest.NewRecorder()
-            server.completeTodo(w, req)
+            server.updateTodo(w, req)
 
             // 検証
             assert.Equal(t, tc.expectedStatus, w.Code)

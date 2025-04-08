@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/ko-taka-dev/golang_dev_journey/todo/internal/usecase"
 	"github.com/ko-taka-dev/golang_dev_journey/todo/pkg/errors"
@@ -59,10 +60,15 @@ func (h *TodoHandler) GetTodosHandler(c *gin.Context) {
     c.JSON(http.StatusOK, todos)
 }
 
-// CompleteTodoHandler はTODOを完了状態にするハンドラ
-func (h *TodoHandler) CompleteTodoHandler(c *gin.Context) {
+// UpdateTodoHandler はTODOを完了状態にするハンドラ
+func (h *TodoHandler) UpdateTodoHandler(c *gin.Context) {
     id := c.Param("id")
-    todo, err := h.usecase.CompleteTodoByID(id)
+    doneStatus, err := strconv.ParseBool(c.Param("status"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "無効なステータスです"})
+        return
+    }
+    todo, err := h.usecase.UpdateTodo(id, doneStatus)
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
         return

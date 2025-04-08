@@ -18,6 +18,11 @@ type TodoServer struct {
     logger  *logger.Logger   
 }
 
+// UpdateStatusRequest はTODOの完了状態を更新するためのリクエスト
+type UpdateStatusRequest struct {
+	Done bool `json:"done"`
+}
+
 // NewTodoServer は新しいTodoServerインスタンスを作成する
 func NewTodoServer(useCase usecase.TodoUseCaseInterface) *TodoServer {
 	s := &TodoServer{
@@ -33,8 +38,8 @@ func NewTodoServer(useCase usecase.TodoUseCaseInterface) *TodoServer {
 func (s *TodoServer) routes() {
 	s.router.HandleFunc("/todos", s.getTodos).Methods("GET")
 	s.router.HandleFunc("/todos", s.createTodo).Methods("POST")
+	s.router.HandleFunc("/todos/{id}", s.updateTodo).Methods("PUT")
 	s.router.HandleFunc("/todos/{id}", s.deleteTodo).Methods("DELETE")
-	s.router.HandleFunc("/todos/{id}/done", s.completeTodo).Methods("PUT")
 }
 
 // Start はサーバーを指定されたアドレスで起動する
@@ -111,6 +116,47 @@ func (s *TodoServer) createTodo(w http.ResponseWriter, r *http.Request) {
     s.logger.Infof("新しいTodoを作成しました: id=%d, title=%s", todo.ID, todo.Title)
 }
 
+// updateTodo は指定されたTODOを更新する
+func (s *TodoServer) updateTodo(w http.ResponseWriter, r *http.Request) {
+    s.logger.Info("PUT /todos/{id} リクエストを受信しました")
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+        s.logger.Error("IDは必須です")
+        http.Error(w, "IDは必須です", http.StatusBadRequest)
+        return
+    }
+
+    var req UpdateStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+    
+    todo, err := s.useCase.UpdateTodo(id, req.Done)
+    if err != nil {
+        if errors.IsNotFound(err) {
+            s.logger.Errorf("指定されたTodoが見つかりません: %v", err)
+            http.Error(w, err.Error(), http.StatusNotFound)
+            return
+        }
+        s.logger.Errorf("Todoの更新中にエラーが発生しました: %v", err)
+        http.Error(w, "Todoの更新中にエラーが発生しました", http.StatusInternalServerError)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    
+    if err := json.NewEncoder(w).Encode(todo); err != nil {
+        s.logger.Errorf("Todoのエンコード中にエラーが発生しました: %v", err)
+        http.Error(w, "Todoのエンコード中にエラーが発生しました", http.StatusInternalServerError)
+        return
+    }
+    s.logger.Infof("Todoを更新しました: id=%s, title=%s", id, todo.Title)
+}
+
 // deleteTodo は指定されたTODOを削除する
 func (s *TodoServer) deleteTodo(w http.ResponseWriter, r *http.Request) {
     s.logger.Info("DELETE /todos/{id} リクエストを受信しました")
@@ -137,39 +183,4 @@ func (s *TodoServer) deleteTodo(w http.ResponseWriter, r *http.Request) {
     
     w.WriteHeader(http.StatusNoContent)
     s.logger.Infof("Todoを削除しました: id=%s", id)
-}
-
-// completeTodo は指定されたTODOを完了状態にする
-func (s *TodoServer) completeTodo(w http.ResponseWriter, r *http.Request) {
-    s.logger.Info("PUT /todos/{id}/done リクエストを受信しました")
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	if id == "" {
-        s.logger.Error("IDは必須です")
-        http.Error(w, "IDは必須です", http.StatusBadRequest)
-        return
-    }
-    
-    todo, err := s.useCase.CompleteTodoByID(id)
-    if err != nil {
-        if errors.IsNotFound(err) {
-            s.logger.Errorf("指定されたTodoが見つかりません: %v", err)
-            http.Error(w, err.Error(), http.StatusNotFound)
-            return
-        }
-        s.logger.Errorf("Todoの更新中にエラーが発生しました: %v", err)
-        http.Error(w, "Todoの更新中にエラーが発生しました", http.StatusInternalServerError)
-        return
-    }
-    
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    
-    if err := json.NewEncoder(w).Encode(todo); err != nil {
-        s.logger.Errorf("Todoのエンコード中にエラーが発生しました: %v", err)
-        http.Error(w, "Todoのエンコード中にエラーが発生しました", http.StatusInternalServerError)
-        return
-    }
-    s.logger.Infof("Todoを完了状態にしました: id=%s, title=%s", id, todo.Title)
 }
